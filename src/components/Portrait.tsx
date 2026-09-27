@@ -71,7 +71,7 @@ const fragmentShader = /* glsl */ `
 `
 
 function Face({ container }: { container: React.RefObject<HTMLDivElement | null> }) {
-  const map = useTexture('/portrait.webp')
+  const map = useTexture(`${import.meta.env.BASE_URL}portrait.webp`)
   map.colorSpace = THREE.SRGBColorSpace
   const { viewport } = useThree()
 
