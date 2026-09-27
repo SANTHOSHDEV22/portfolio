@@ -4,6 +4,7 @@ import { profile, experience, education, skills, projects } from './data/profile
 
 const Scene = lazy(() => import('./components/Scene'))
 const SkillsSphere = lazy(() => import('./components/SkillsSphere'))
+const Portrait = lazy(() => import('./components/Portrait'))
 
 const nav = ['about', 'experience', 'skills', 'projects', 'contact']
 
@@ -30,20 +31,29 @@ export default function App() {
 
       <main id="top">
         <section className="hero">
-          <Reveal>
-            <p className="eyebrow">Hi, I'm</p>
-            <h1>{profile.name}</h1>
-            <h2 className="gradient">{profile.role}</h2>
-            <p className="lead">{profile.tagline}</p>
-            <div className="cta">
-              <a className="btn primary" href="#projects">
-                View my work
-              </a>
-              <a className="btn" href={profile.links.linkedin} target="_blank" rel="noreferrer">
-                LinkedIn
-              </a>
-            </div>
-          </Reveal>
+          <div className="hero-grid">
+            <Reveal>
+              <p className="eyebrow">Hi, I'm</p>
+              <h1>{profile.name}</h1>
+              <h2 className="gradient">{profile.role}</h2>
+              <p className="lead">{profile.tagline}</p>
+              <div className="cta">
+                <a className="btn primary" href="#projects">
+                  View my work
+                </a>
+                <a className="btn" href={profile.links.linkedin} target="_blank" rel="noreferrer">
+                  LinkedIn
+                </a>
+              </div>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="portrait-wrap">
+                <Suspense fallback={<div className="portrait" />}>
+                  <Portrait />
+                </Suspense>
+              </div>
+            </Reveal>
+          </div>
           <div className="scroll-hint">scroll</div>
         </section>
 
