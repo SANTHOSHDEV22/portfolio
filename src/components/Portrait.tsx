@@ -5,11 +5,12 @@ import * as THREE from 'three'
 import { easing } from 'maath'
 import useInView from './useInView'
 
-// Eye centres in portrait.webp pixel coordinates (1156x1156, origin top-left).
-const IMAGE_SIZE = 1156
-const EYES = [new THREE.Vector2(500, 377), new THREE.Vector2(651, 376)]
-// How far the irises may travel, in image pixels.
-const MAX_SHIFT = new THREE.Vector2(10, 4)
+// Eye centres in portrait.webp pixel coordinates (1024x1536, origin top-left).
+const IMAGE_SIZE = new THREE.Vector2(1024, 1536)
+const EYES = [new THREE.Vector2(457, 296), new THREE.Vector2(561, 293)]
+// Half-size of the warp ellipse around each eye, and how far the irises may travel (image pixels).
+const EYE_RADIUS = new THREE.Vector2(28, 18)
+const MAX_SHIFT = new THREE.Vector2(7, 3)
 
 // Mouse position in viewport pixels, tracked across the whole page.
 const mouse = { x: window.innerWidth * 0.2, y: window.innerHeight * 0.3 }
@@ -24,7 +25,8 @@ const vertexShader = /* glsl */ `
 
 const fragmentShader = /* glsl */ `
   uniform sampler2D uMap;
-  uniform float uSize;
+  uniform vec2 uSize;
+  uniform vec2 uEyeRadius;
   uniform vec2 uEyeL;
   uniform vec2 uEyeR;
   uniform vec2 uShift;
@@ -37,7 +39,7 @@ const fragmentShader = /* glsl */ `
   // Liquify-style warp: inside an ellipse around each eye, sample from an offset
   // so the iris moves; weight ~1 over the iris, 0 at the eye corners.
   float eyeWeight(vec2 p, vec2 eye) {
-    vec2 d = (p - eye) / vec2(40.0, 26.0);
+    vec2 d = (p - eye) / uEyeRadius;
     return 1.0 - smoothstep(0.4, 1.0, length(d));
   }
 
@@ -45,7 +47,7 @@ const fragmentShader = /* glsl */ `
     vec2 p = vec2(uv.x, 1.0 - uv.y) * uSize;
     float w = max(eyeWeight(p, uEyeL), eyeWeight(p, uEyeR));
     p -= uShift * w;
-    return vec2(p.x / uSize, 1.0 - p.y / uSize);
+    return vec2(p.x / uSize.x, 1.0 - p.y / uSize.y);
   }
 
   void main() {
@@ -58,7 +60,7 @@ const fragmentShader = /* glsl */ `
     col = mix(col * vec3(1.0, 0.9, 0.8), duo, 0.55) * 0.92;
 
     // Soft key light from the cursor side of the face.
-    vec2 fromCenter = vUv - vec2(0.5, 0.62);
+    vec2 fromCenter = vUv - vec2(0.5, 0.78);
     col *= 1.0 + 0.25 * dot(normalize(fromCenter + 1e-4), uLight) * smoothstep(0.0, 0.35, length(fromCenter));
 
     // Rim light: bright where this pixel is opaque but its neighbour toward the light is not.
@@ -70,7 +72,7 @@ const fragmentShader = /* glsl */ `
 
     // Melt into the background at the bottom and left edges.
     float alpha = tex.a;
-    alpha *= smoothstep(0.0, 0.32, vUv.y);
+    alpha *= smoothstep(0.0, 0.38, vUv.y);
     alpha *= smoothstep(0.0, 0.12, vUv.x);
 
     gl_FragColor = vec4(col, alpha);
@@ -87,6 +89,7 @@ function Face({ container }: { container: React.RefObject<HTMLDivElement | null>
     () => ({
       uMap: { value: map },
       uSize: { value: IMAGE_SIZE },
+      uEyeRadius: { value: EYE_RADIUS },
       uEyeL: { value: EYES[0] },
       uEyeR: { value: EYES[1] },
       uShift: { value: new THREE.Vector2() },
@@ -102,13 +105,13 @@ function Face({ container }: { container: React.RefObject<HTMLDivElement | null>
     if (!el) return
     const rect = el.getBoundingClientRect()
     // Screen position of the midpoint between the eyes.
-    const ex = rect.left + ((EYES[0].x + EYES[1].x) / 2 / IMAGE_SIZE) * rect.width
-    const ey = rect.top + ((EYES[0].y + EYES[1].y) / 2 / IMAGE_SIZE) * rect.height
+    const ex = rect.left + ((EYES[0].x + EYES[1].x) / 2 / IMAGE_SIZE.x) * rect.width
+    const ey = rect.top + ((EYES[0].y + EYES[1].y) / 2 / IMAGE_SIZE.y) * rect.height
     const dx = mouse.x - ex
     const dy = mouse.y - ey
     const dist = Math.hypot(dx, dy)
     // Full deflection once the cursor is ~half a portrait width away.
-    const k = Math.min(dist / (rect.width * 0.5), 1) / (dist || 1)
+    const k = Math.min(dist / (rect.width * 0.6), 1) / (dist || 1)
     shiftTarget.set(dx * k * MAX_SHIFT.x, dy * k * MAX_SHIFT.y)
     easing.damp2(uniforms.uShift.value, shiftTarget, 0.12, delta)
 

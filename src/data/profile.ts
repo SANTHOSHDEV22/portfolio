@@ -81,13 +81,6 @@ export const projects: Project[] = [
     tags: ['.NET', 'SQL'],
     art: 'saas',
   },
-  {
-    name: 'MindX', // TODO: confirm details
-    category: 'AI Application',
-    description: 'Project description goes here.',
-    tags: ['TODO'],
-    art: 'ai',
-  },
 ]
 
 // Only real quotes belong here — the section is hidden while this is empty.
