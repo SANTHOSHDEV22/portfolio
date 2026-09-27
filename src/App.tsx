@@ -11,6 +11,8 @@ import {
   projects,
   testimonials,
   experience,
+  education,
+  certifications,
 } from './data/profile'
 
 const Scene = lazy(() => import('./components/Scene'))
@@ -21,6 +23,7 @@ const ContactOrb = lazy(() => import('./components/ContactOrb'))
 const nav = [
   ['home', 'Home'],
   ['about', 'About'],
+  ['experience', 'Experience'],
   ['services', 'Services'],
   ['work', 'Work'],
   ['expertise', 'Expertise'],
@@ -28,7 +31,7 @@ const nav = [
   ['contact', 'Contact'],
 ]
 
-const statIcons = ['briefcase', 'layers', 'cpu', 'commit'] as const
+const statIcons = ['briefcase', 'layers', 'cpu', 'award'] as const
 
 function Monogram() {
   return <span className="monogram">{profile.monogram}</span>
@@ -193,7 +196,7 @@ export default function App() {
                   </li>
                 ))}
               </ul>
-              <a className="btn-outline" href="#expertise">
+              <a className="btn-outline" href="#experience">
                 More about me <Icon name="arrow" size={16} />
               </a>
             </Reveal>
@@ -212,9 +215,9 @@ export default function App() {
                 <span className="t-k">const</span> engineer = {'{'}
                 {'\n  '}name: <span className="t-s">'{profile.name}'</span>,
                 {'\n  '}role: <span className="t-s">'{profile.role}'</span>,
-                {'\n  '}stack: [<span className="t-s">'.NET'</span>, <span className="t-s">'Python'</span>,{' '}
-                <span className="t-s">'React'</span>],
-                {'\n  '}loves: <span className="t-s">'clean architecture'</span>,
+                {'\n  '}stack: [<span className="t-s">'.NET Core'</span>, <span className="t-s">'React'</span>,{' '}
+                <span className="t-s">'SQL Server'</span>],
+                {'\n  '}loves: <span className="t-s">'scalable systems'</span>,
                 {'\n  '}available: <span className="t-n">true</span>,
                 {'\n'}
                 {'}'}
@@ -229,6 +232,63 @@ export default function App() {
               </div>
             </div>
           </Reveal>
+        </section>
+
+        {/* EXPERIENCE */}
+        <section id="experience">
+          <SectionHead
+            label="Experience"
+            title={
+              <>
+                Where I've <em>built.</em>
+              </>
+            }
+          />
+          <ol className="xp">
+            {experience.map((x, i) => (
+              <Reveal key={x.company} delay={i * 0.08}>
+                <li className={x.current ? 'xp-item current' : 'xp-item'}>
+                  <div className="xp-meta">
+                    <span className="xp-period">{x.period}</span>
+                    {x.location && (
+                      <span className="muted">
+                        <Icon name="pin" size={12} /> {x.location}
+                      </span>
+                    )}
+                    {x.current && <span className="xp-now">Current</span>}
+                  </div>
+                  <div className="xp-card panel">
+                    <div className="xp-head">
+                      <div>
+                        <h3>{x.title}</h3>
+                        <p className="accent">{x.company}</p>
+                      </div>
+                      {x.highlight && (
+                        <span className="xp-highlight">
+                          <Icon name="factory" size={14} /> {x.highlight}
+                        </span>
+                      )}
+                    </div>
+                    <p className="xp-body">{x.body}</p>
+                    {x.points && (
+                      <ul className="xp-points">
+                        {x.points.map((p) => (
+                          <li key={p}>{p}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {x.tags && (
+                      <div className="tags">
+                        {x.tags.map((t) => (
+                          <span key={t}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              </Reveal>
+            ))}
+          </ol>
         </section>
 
         {/* SERVICES */}
@@ -355,15 +415,25 @@ export default function App() {
               ))}
             </div>
             <div className="timeline">
-              {experience.map((x) => (
-                <Reveal key={x.company + x.title}>
+              <p className="label">Education</p>
+              {education.map((ed) => (
+                <Reveal key={ed.school}>
                   <div className="job">
                     <div className="bar-head">
-                      <strong>{x.title}</strong>
-                      <span className="muted">{x.period}</span>
+                      <strong>{ed.school}</strong>
+                      <span className="muted">{ed.period}</span>
                     </div>
-                    <p className="accent">{x.company}</p>
-                    <p className="muted">{x.body}</p>
+                    <p className="muted">{ed.detail}</p>
+                  </div>
+                </Reveal>
+              ))}
+              <p className="label">Certifications</p>
+              {certifications.map((c) => (
+                <Reveal key={c}>
+                  <div className="job">
+                    <p>
+                      <Icon name="award" size={14} className="accent" /> {c}
+                    </p>
                   </div>
                 </Reveal>
               ))}

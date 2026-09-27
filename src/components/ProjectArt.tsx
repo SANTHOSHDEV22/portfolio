@@ -31,6 +31,25 @@ export default function ProjectArt({ kind }: { kind: Project['art'] }) {
       </div>
     )
   }
+  if (kind === 'learn') {
+    // Adaptive progress curve: points rise as the learner improves.
+    const pts = [
+      [20, 160], [65, 140], [110, 148], [155, 110], [200, 92], [245, 60], [280, 40],
+    ]
+    const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ')
+    return (
+      <svg className="art art-learn" viewBox="0 0 300 200" aria-hidden>
+        {[50, 90, 130, 170].map((y) => (
+          <line key={y} x1="10" x2="290" y1={y} y2={y} />
+        ))}
+        <path d={`${d} L280 180 L20 180 Z`} className="area" />
+        <path d={d} className="curve" />
+        {pts.map(([x, y]) => (
+          <circle key={x} cx={x} cy={y} r={4} />
+        ))}
+      </svg>
+    )
+  }
   // Neural-net style node graph.
   const layers = [3, 5, 5, 2]
   const nodes = layers.flatMap((n, li) =>
