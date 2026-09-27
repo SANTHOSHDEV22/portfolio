@@ -1,6 +1,5 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Float, MeshDistortMaterial, Stars, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { easing } from 'maath'
 
@@ -10,48 +9,63 @@ function scrollProgress() {
   return max > 0 ? window.scrollY / max : 0
 }
 
-function Blob() {
-  const mesh = useRef<THREE.Mesh>(null!)
+// Warm dust drifting slowly upward.
+function Dust({ count = 900 }) {
+  const points = useRef<THREE.Points>(null!)
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 22
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 14
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 10
+    }
+    return arr
+  }, [count])
+
   useFrame((_, delta) => {
-    const p = scrollProgress()
-    mesh.current.rotation.x += delta * 0.15
-    mesh.current.rotation.y += delta * 0.2
-    // Swing from right to left as the page scrolls, and shrink toward the end.
-    easing.damp3(mesh.current.position, [1.8 * Math.cos(p * Math.PI), -p * 1.5, -p * 2], 0.4, delta)
-    easing.damp3(mesh.current.scale, 1.6 - p * 0.6, 0.4, delta)
+    const pos = points.current.geometry.attributes.position as THREE.BufferAttribute
+    for (let i = 0; i < count; i++) {
+      let y = pos.getY(i) + delta * 0.08
+      if (y > 7) y = -7
+      pos.setY(i, y)
+    }
+    pos.needsUpdate = true
+    points.current.rotation.y = scrollProgress() * 0.6
   })
+
   return (
-    <Float speed={2} rotationIntensity={0.6} floatIntensity={1.2}>
-      <mesh ref={mesh} position={[1.8, 0, 0]}>
-        <icosahedronGeometry args={[1, 64]} />
-        <MeshDistortMaterial color="#6d5dfc" roughness={0.15} metalness={0.6} distort={0.45} speed={2} />
-      </mesh>
-    </Float>
+    <points ref={points}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.03} color="#d9a36f" transparent opacity={0.55} sizeAttenuation depthWrite={false} />
+    </points>
   )
 }
 
-function Rings() {
+// Thin orbital rings echoing the hero's circular motif.
+function Orbits() {
   const group = useRef<THREE.Group>(null!)
   useFrame((_, delta) => {
-    group.current.rotation.z += delta * 0.1
-    group.current.rotation.y = scrollProgress() * Math.PI
+    const p = scrollProgress()
+    group.current.rotation.z += delta * 0.03
+    easing.damp3(group.current.position, [2.6, 0.6 + p * 6, -2], 0.5, delta)
   })
   return (
-    <group ref={group} position={[1.8, 0, -1]}>
-      {[2.4, 3.1].map((r, i) => (
-        <mesh key={r} rotation={[Math.PI / 2.4 + i * 0.5, i * 0.6, 0]}>
-          <torusGeometry args={[r, 0.012, 16, 200]} />
-          <meshBasicMaterial color={i ? '#22d3ee' : '#a78bfa'} transparent opacity={0.5} />
+    <group ref={group} position={[2.6, 0.6, -2]}>
+      {[2.6, 3.4, 4.3].map((r, i) => (
+        <mesh key={r} rotation={[0.2 * i, 0.3 * i, 0]}>
+          <torusGeometry args={[r, 0.004, 8, 256]} />
+          <meshBasicMaterial color="#c8925e" transparent opacity={0.25 - i * 0.05} />
         </mesh>
       ))}
     </group>
   )
 }
 
-// Camera follows the pointer slightly for parallax.
 function Rig() {
   useFrame((state, delta) => {
-    easing.damp3(state.camera.position, [state.pointer.x * 0.6, state.pointer.y * 0.4, 6], 0.5, delta)
+    easing.damp3(state.camera.position, [state.pointer.x * 0.4, state.pointer.y * 0.25, 7], 0.6, delta)
     state.camera.lookAt(0, 0, 0)
   })
   return null
@@ -59,16 +73,10 @@ function Rig() {
 
 export default function Scene() {
   return (
-    <div className="scene">
-      <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 2]}>
-        <color attach="background" args={['#07070d']} />
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[3, 4, 5]} intensity={2} color="#ffffff" />
-        <pointLight position={[-4, -2, 2]} intensity={40} color="#22d3ee" />
-        <Stars radius={60} depth={40} count={4000} factor={3} fade speed={0.6} />
-        <Sparkles count={80} scale={10} size={2} speed={0.3} color="#a78bfa" />
-        <Blob />
-        <Rings />
+    <div className="scene" aria-hidden>
+      <Canvas camera={{ position: [0, 0, 7], fov: 50 }} dpr={[1, 1.5]} gl={{ alpha: true }}>
+        <Dust />
+        <Orbits />
         <Rig />
       </Canvas>
     </div>

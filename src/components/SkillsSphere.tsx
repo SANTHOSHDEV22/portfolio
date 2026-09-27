@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import * as THREE from 'three'
+import useInView from './useInView'
 
 // Evenly distribute points on a sphere (Fibonacci lattice).
 function spherePoints(n: number, radius: number) {
@@ -27,8 +28,8 @@ function Word({ text, position }: { text: string; position: THREE.Vector3 }) {
   return (
     <group ref={ref} position={position}>
       <Text
-        fontSize={0.32}
-        color={hovered ? '#22d3ee' : '#e4e4f0'}
+        fontSize={0.26}
+        color={hovered ? '#e0a870' : '#e9dfd3'}
         anchorX="center"
         anchorY="middle"
         onPointerOver={(e) => (e.stopPropagation(), setHovered(true))}
@@ -42,7 +43,7 @@ function Word({ text, position }: { text: string; position: THREE.Vector3 }) {
 
 function Cloud({ words }: { words: string[] }) {
   const group = useRef<THREE.Group>(null!)
-  const points = useMemo(() => spherePoints(words.length, 2.2), [words.length])
+  const points = useMemo(() => spherePoints(words.length, 2.5), [words.length])
   useFrame((state, delta) => {
     group.current.rotation.y += delta * 0.15 + state.pointer.x * delta * 0.5
     group.current.rotation.x += state.pointer.y * delta * 0.3
@@ -57,9 +58,10 @@ function Cloud({ words }: { words: string[] }) {
 }
 
 export default function SkillsSphere({ skills }: { skills: string[] }) {
+  const [ref, inView] = useInView<HTMLDivElement>()
   return (
-    <div className="skills-canvas">
-      <Canvas camera={{ position: [0, 0, 6], fov: 55 }} dpr={[1, 2]}>
+    <div className="skills-canvas" ref={ref}>
+      <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 0, 6], fov: 55 }} dpr={[1, 2]}>
         <Cloud words={skills} />
       </Canvas>
     </div>
