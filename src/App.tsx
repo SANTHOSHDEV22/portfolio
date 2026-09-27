@@ -1,24 +1,23 @@
-import { lazy, Suspense, useId } from 'react'
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
 import Reveal from './components/Reveal'
-import Icon from './components/Icons'
+import Icon, { type IconName } from './components/Icons'
 import ProjectArt from './components/ProjectArt'
 import {
   profile,
+  companies,
   stats,
   services,
   tech,
-  expertise,
-  projects,
-  testimonials,
   experience,
   education,
   certifications,
+  projects,
+  process,
+  testimonials,
 } from './data/profile'
 
-const Scene = lazy(() => import('./components/Scene'))
 const Portrait = lazy(() => import('./components/Portrait'))
-const SkillsSphere = lazy(() => import('./components/SkillsSphere'))
-const ContactOrb = lazy(() => import('./components/ContactOrb'))
+const GlassBlob = lazy(() => import('./components/GlassBlob'))
 
 const nav = [
   ['home', 'Home'],
@@ -26,57 +25,68 @@ const nav = [
   ['experience', 'Experience'],
   ['services', 'Services'],
   ['work', 'Work'],
-  ['expertise', 'Expertise'],
+  ['process', 'Process'],
   ...(testimonials.length ? [['testimonials', 'Testimonials']] : []),
   ['contact', 'Contact'],
 ]
 
-const statIcons = ['briefcase', 'layers', 'cpu', 'award'] as const
-
-function Monogram() {
-  return <span className="monogram">{profile.monogram}</span>
-}
-
-// Circular text badge like a wax seal, rotating slowly.
-function Badge({ text }: { text: string }) {
-  const id = useId()
+function Head({ label, title, action }: { label: string; title: ReactNode; action?: ReactNode }) {
   return (
-    <svg className="badge" viewBox="0 0 120 120" aria-hidden>
-      <defs>
-        <path id={id} d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0" />
-      </defs>
-      <circle cx="60" cy="60" r="56" />
-      <text>
-        <textPath href={`#${id}`}>{text}</textPath>
-      </text>
-      <text x="60" y="68" textAnchor="middle" className="badge-mono">
-        {profile.monogram}
-      </text>
-    </svg>
+    <div className="head">
+      <div>
+        <p className="eyebrow">{label}</p>
+        <h2>{title}</h2>
+      </div>
+      {action}
+    </div>
   )
 }
 
-function SectionHead({ label, title, center }: { label: string; title: React.ReactNode; center?: boolean }) {
+function ContactForm() {
+  const [sent, setSent] = useState(false)
+  // No backend: compose an email in the visitor's mail app.
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const f = new FormData(e.currentTarget)
+    const subject = `${f.get('project') || 'Project enquiry'} — ${f.get('name')}`
+    const body = `${f.get('message')}\n\n${f.get('name')}\n${f.get('email')}`
+    window.location.href = `mailto:${profile.links.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    setSent(true)
+  }
   return (
-    <Reveal>
-      <div className={center ? 'section-head center' : 'section-head'}>
-        <p className="label">{label}</p>
-        <h2>{title}</h2>
-      </div>
-    </Reveal>
+    <form className="form glass" onSubmit={onSubmit}>
+      <input name="name" placeholder="Your name" required autoComplete="name" />
+      <input name="email" type="email" placeholder="Your email" required autoComplete="email" />
+      <select name="project" defaultValue="" className="full">
+        <option value="" disabled>
+          Your project
+        </option>
+        <option>Django / DRF backend</option>
+        <option>.NET Core Web API</option>
+        <option>Full stack web application</option>
+        <option>Job opportunity</option>
+        <option>Something else</option>
+      </select>
+      <textarea name="message" placeholder="Your message" rows={5} required className="full" />
+      <button className="btn dark full-sm" type="submit">
+        {sent ? 'Opening your mail app…' : 'Send message'} <Icon name="send" size={15} />
+      </button>
+    </form>
   )
 }
 
 export default function App() {
   return (
     <>
-      <Suspense fallback={null}>
-        <Scene />
-      </Suspense>
+      <div className="bg" aria-hidden>
+        <i className="bg-a" />
+        <i className="bg-b" />
+        <i className="bg-c" />
+      </div>
 
-      <header className="nav">
+      <header className="nav glass">
         <a href="#home" className="brand">
-          <Monogram />
+          <span className="logo">{profile.monogram}</span>
           <span>
             <strong>{profile.name}</strong>
             <small>{profile.role}</small>
@@ -89,175 +99,119 @@ export default function App() {
             </a>
           ))}
         </nav>
-        <a className="btn-outline small" href="#contact">
+        <a className="btn light small" href="#contact">
           Let's talk <Icon name="arrowUpRight" size={14} />
         </a>
       </header>
 
-      <main>
+      <main className="shell">
         {/* HERO */}
-        <section id="home" className="hero">
-          <div className="hero-glow" aria-hidden />
-          <div className="hero-portrait">
-            <Suspense fallback={<div className="portrait" />}>
-              <Portrait />
-            </Suspense>
-            <span className="signature" aria-hidden>
-              {profile.firstName}
-            </span>
-          </div>
-          <Badge text="FULL STACK • SOFTWARE ENGINEER • " />
-
-          <div className="hero-copy">
-            <Reveal>
-              <p className="label">{profile.eyebrow}</p>
-              <h1>
-                {profile.headline.before} <em>{profile.headline.accent}</em> {profile.headline.after}
-              </h1>
-              <p className="lead">
-                {profile.intro} <strong>{profile.introStrong}</strong>
-              </p>
+        <section id="home" className="hero glass">
+          <Reveal>
+            <div className="hero-copy">
+              <p className="eyebrow">Hello, I'm</p>
+              <h1>{profile.name}</h1>
+              <p className="role">{profile.role}</p>
+              <p className="lead">{profile.tagline}</p>
               <div className="cta">
-                <a className="btn" href="#work">
-                  View my work <Icon name="arrow" size={16} />
+                <a className="btn dark" href="#work">
+                  View my work <Icon name="arrowUpRight" size={15} />
                 </a>
-                {profile.resumeUrl && (
-                  <a className="btn-text" href={profile.resumeUrl} download>
-                    Download resume <Icon name="download" size={16} />
+                {profile.resumeUrl ? (
+                  <a className="btn light" href={profile.resumeUrl} download>
+                    Download CV <Icon name="download" size={15} />
+                  </a>
+                ) : (
+                  <a className="btn light" href={profile.links.linkedin} target="_blank" rel="noreferrer">
+                    LinkedIn <Icon name="linkedin" size={14} />
                   </a>
                 )}
-                <a className="btn-text" href={profile.links.github} target="_blank" rel="noreferrer">
-                  GitHub <Icon name="arrowUpRight" size={16} />
-                </a>
               </div>
-              <div className="socials">
-                <a href={profile.links.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn">
-                  <Icon name="linkedin" size={15} />
-                </a>
-                <a href={profile.links.github} target="_blank" rel="noreferrer" aria-label="GitHub">
-                  <Icon name="github" size={15} />
-                </a>
-                <a href={`mailto:${profile.links.email}`} aria-label="Email">
-                  <Icon name="mail" size={15} />
-                </a>
-              </div>
-            </Reveal>
-          </div>
-
-          <a className="scroll-down" href="#about">
-            <span className="mouse" />
-            Scroll
-            <br />
-            down
-          </a>
-        </section>
-
-        {/* STATS */}
-        <section className="stats-wrap">
-          <Reveal>
-            <div className="stats panel">
-              {stats.map((s, i) => (
-                <div className="stat" key={s.label}>
-                  <span className="stat-icon">
-                    <Icon name={statIcons[i % statIcons.length]} size={20} />
-                  </span>
-                  <div>
-                    <p className="stat-value">
-                      {s.value}
-                      <sup>{s.suffix}</sup>
-                    </p>
-                    <p className="stat-label">{s.label}</p>
-                  </div>
+              <div className="trusted">
+                <p>Experience at</p>
+                <div>
+                  {companies.map((c) => (
+                    <span key={c}>{c}</span>
+                  ))}
                 </div>
-              ))}
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.15}>
+            <div className="hero-visual">
+              <div className="frame glass" />
+              <div className="portrait-clip">
+                <Suspense fallback={<div className="portrait" />}>
+                  <Portrait />
+                </Suspense>
+              </div>
+              <div className="float-card glass stat-card">
+                <strong>3</strong>
+                <span>Companies</span>
+              </div>
+              <div className="float-card glass stack-card">
+                <span className="muted">Backend stack</span>
+                <strong>Python · Django · DRF</strong>
+                <strong>.NET Core · C#</strong>
+                <svg viewBox="0 0 120 30" className="spark" aria-hidden>
+                  <path d="M2 26 L20 20 L36 22 L54 13 L72 15 L90 7 L118 3" />
+                </svg>
+              </div>
+              <span className="orb glass">
+                <Icon name="sparkle" size={20} />
+              </span>
             </div>
           </Reveal>
         </section>
 
         {/* ABOUT */}
-        <section id="about" className="split">
-          <div>
-            <SectionHead
-              label="About me"
-              title={
-                <>
-                  {profile.about.title[0]}
-                  <br />
-                  {profile.about.title[1]}
-                </>
-              }
-            />
-            <Reveal delay={0.1}>
-              <p className="body">{profile.about.body}</p>
-              <ul className="checks">
-                {profile.about.points.map((p) => (
-                  <li key={p}>
-                    <Icon name="check" size={14} /> {p}
-                  </li>
+        <section id="about" className="about glass">
+          <Reveal>
+            <div>
+              <p className="eyebrow">About me</p>
+              <h2>
+                {profile.about.title[0]}
+                <br />
+                {profile.about.title[1]}
+              </h2>
+              <div className="stats glass">
+                {stats.map((s, i) => (
+                  <div key={s.label}>
+                    <Icon name={(['briefcase', 'layers', 'cpu'] as const)[i]} size={16} />
+                    <strong>{s.value}</strong>
+                    <span>{s.label}</span>
+                  </div>
                 ))}
-              </ul>
-              <a className="btn-outline" href="#experience">
-                More about me <Icon name="arrow" size={16} />
+              </div>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div>
+              <p className="body">{profile.about.body}</p>
+              <p className="body muted small-gap">
+                <Icon name="pin" size={14} /> Based in {profile.location}
+              </p>
+              <a className="btn light" href="#experience">
+                My experience <Icon name="arrowUpRight" size={14} />
               </a>
-            </Reveal>
-          </div>
-          <Reveal delay={0.2}>
-            <div className="editor panel">
-              <div className="editor-bar">
-                <i />
-                <i />
-                <i />
-                <span>engineer.ts</span>
-              </div>
-              <pre>
-                <span className="t-c">{'// who I am, in code'}</span>
-                {'\n'}
-                <span className="t-k">const</span> engineer = {'{'}
-                {'\n  '}name: <span className="t-s">'{profile.name}'</span>,
-                {'\n  '}role: <span className="t-s">'{profile.role}'</span>,
-                {'\n  '}stack: [<span className="t-s">'.NET Core'</span>, <span className="t-s">'React'</span>,{' '}
-                <span className="t-s">'SQL Server'</span>],
-                {'\n  '}loves: <span className="t-s">'scalable systems'</span>,
-                {'\n  '}available: <span className="t-n">true</span>,
-                {'\n'}
-                {'}'}
-                <span className="caret" />
-              </pre>
-              <div className="location">
-                <Icon name="pin" size={16} />
-                <span>
-                  <small>Based in</small>
-                  {profile.location}
-                </span>
-              </div>
             </div>
           </Reveal>
         </section>
 
         {/* EXPERIENCE */}
-        <section id="experience">
-          <SectionHead
-            label="Experience"
-            title={
-              <>
-                Where I've <em>built.</em>
-              </>
-            }
-          />
+        <section id="experience" className="block glass">
+          <Head label="Experience" title="Where I've Worked" />
           <ol className="xp">
             {experience.map((x, i) => (
               <Reveal key={x.company} delay={i * 0.08}>
                 <li className={x.current ? 'xp-item current' : 'xp-item'}>
                   <div className="xp-meta">
                     <span className="xp-period">{x.period}</span>
-                    {x.location && (
-                      <span className="muted">
-                        <Icon name="pin" size={12} /> {x.location}
-                      </span>
-                    )}
-                    {x.current && <span className="xp-now">Current</span>}
+                    {x.location && <span className="muted">{x.location}</span>}
+                    {x.current && <span className="pill">Current</span>}
                   </div>
-                  <div className="xp-card panel">
+                  <div className="xp-card glass">
                     <div className="xp-head">
                       <div>
                         <h3>{x.title}</h3>
@@ -269,7 +223,7 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                    <p className="xp-body">{x.body}</p>
+                    <p className="muted">{x.body}</p>
                     {x.points && (
                       <ul className="xp-points">
                         {x.points.map((p) => (
@@ -289,98 +243,103 @@ export default function App() {
               </Reveal>
             ))}
           </ol>
+          <div className="edu">
+            {education.map((ed) => (
+              <div key={ed.school} className="edu-item glass">
+                <Icon name="layers" size={16} />
+                <div>
+                  <strong>{ed.school}</strong>
+                  <span className="muted">
+                    {ed.detail} · {ed.period}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {certifications.map((c) => (
+              <div key={c} className="edu-item glass">
+                <Icon name="award" size={16} />
+                <div>
+                  <strong>{c}</strong>
+                  <span className="muted">Certification</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* SERVICES */}
-        <section id="services">
-          <SectionHead
-            center
-            label="Services"
-            title={
-              <>
-                What I can help you <em>build.</em>
-              </>
-            }
-          />
+        <section id="services" className="block glass services-block">
+          <Suspense fallback={null}>
+            <GlassBlob shape="bubble" className="blob blob-services" />
+          </Suspense>
+          <Head label="What I do" title="Services I Offer" />
           <div className="services">
             {services.map((s, i) => (
               <Reveal key={s.title} delay={i * 0.08}>
-                <article className="service panel">
-                  <span className="service-icon">
-                    <Icon name={s.icon} size={22} />
+                <article className="service glass">
+                  <span className={`tile tint-${s.tint}`}>
+                    <Icon name={s.icon} size={20} />
                   </span>
                   <h3>{s.title}</h3>
                   <p>{s.body}</p>
+                  <span className="corner">
+                    <Icon name="arrowUpRight" size={13} />
+                  </span>
                 </article>
               </Reveal>
             ))}
           </div>
         </section>
 
-        {/* TECH STRIP */}
-        <section className="tech-wrap">
-          <Reveal>
-            <div className="tech panel">
-              <p className="label">Technologies & tools</p>
-              <div className="marquee">
-                <div className="marquee-track">
-                  {[...tech, ...tech].map((t, i) => (
-                    <span key={i}>
-                      <i /> {t}
-                    </span>
-                  ))}
+        {/* TECH */}
+        <section className="block glass">
+          <Head label="Tools & skills" title="Technologies I Use" />
+          <div className="tech">
+            {tech.map((t, i) => (
+              <Reveal key={t.name} delay={(i % 8) * 0.04}>
+                <div className="tech-item">
+                  <span className="tech-tile glass" style={{ color: t.color }}>
+                    {t.short}
+                  </span>
+                  <span>{t.name}</span>
                 </div>
-              </div>
-            </div>
-          </Reveal>
+              </Reveal>
+            ))}
+          </div>
         </section>
 
         {/* WORK */}
-        <section id="work">
-          <div className="row-head">
-            <SectionHead
-              label="Featured work"
-              title={
-                <>
-                  Selected <em>projects.</em>
-                </>
-              }
-            />
-            <a className="btn-text" href={profile.links.github} target="_blank" rel="noreferrer">
-              View all projects <Icon name="arrow" size={16} />
-            </a>
-          </div>
+        <section id="work" className="block glass">
+          <Head
+            label="Featured projects"
+            title="Selected Work"
+            action={
+              <a className="btn light small" href={profile.links.github} target="_blank" rel="noreferrer">
+                View all projects <Icon name="arrowUpRight" size={13} />
+              </a>
+            }
+          />
           <div className="work">
             {projects.map((p, i) => (
-              <Reveal key={p.name} delay={i * 0.1}>
-                <a
-                  className="project panel"
-                  href={p.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  onMouseMove={(ev) => {
-                    const r = ev.currentTarget.getBoundingClientRect()
-                    const x = (ev.clientX - r.left) / r.width - 0.5
-                    const y = (ev.clientY - r.top) / r.height - 0.5
-                    ev.currentTarget.style.transform = `perspective(900px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg)`
-                  }}
-                  onMouseLeave={(ev) => (ev.currentTarget.style.transform = '')}
-                >
+              <Reveal key={p.name} delay={i * 0.08}>
+                <a className="project" href={p.url} target="_blank" rel="noreferrer">
                   <div className="project-cover">
-                    <span className="chip">{p.category}</span>
                     <ProjectArt kind={p.art} />
                   </div>
-                  <div className="project-body">
+                  <div className="project-body glass">
                     <div>
                       <h3>{p.name}</h3>
-                      <p>{p.description}</p>
-                      <div className="tags">
-                        {p.tags.map((t) => (
-                          <span key={t}>{t}</span>
-                        ))}
-                      </div>
+                      <p className="muted">{p.category}</p>
                     </div>
-                    <Icon name="arrow" size={18} className="project-arrow" />
+                    <span className="corner">
+                      <Icon name="arrowUpRight" size={13} />
+                    </span>
+                  </div>
+                  <p className="project-desc">{p.description}</p>
+                  <div className="tags">
+                    {p.tags.map((t) => (
+                      <span key={t}>{t}</span>
+                    ))}
                   </div>
                 </a>
               </Reveal>
@@ -388,146 +347,90 @@ export default function App() {
           </div>
         </section>
 
-        {/* EXPERTISE */}
-        <section id="expertise" className="split">
-          <div>
-            <SectionHead
-              label="Expertise"
-              title={
-                <>
-                  Full stack, <em>end to end.</em>
-                </>
-              }
-            />
-            <div className="bars">
-              {expertise.map((e, i) => (
-                <Reveal key={e.area} delay={i * 0.08}>
-                  <div className="bar">
-                    <div className="bar-head">
-                      <span>{e.area}</span>
-                      <span className="muted">{e.items}</span>
-                    </div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${e.level}%` }} />
-                    </div>
+        {/* PROCESS */}
+        <section id="process" className="block glass">
+          <Head label="My process" title="How I Build Software" />
+          <div className="process">
+            {process.map((s, i) => (
+              <Reveal key={s.title} delay={i * 0.08}>
+                <div className="step glass">
+                  <div className="step-top">
+                    <span className="tile tint-violet small">
+                      <Icon name={s.icon as IconName} size={15} />
+                    </span>
+                    <span className="step-num">{String(i + 1).padStart(2, '0')}</span>
                   </div>
-                </Reveal>
-              ))}
-            </div>
-            <div className="timeline">
-              <p className="label">Education</p>
-              {education.map((ed) => (
-                <Reveal key={ed.school}>
-                  <div className="job">
-                    <div className="bar-head">
-                      <strong>{ed.school}</strong>
-                      <span className="muted">{ed.period}</span>
-                    </div>
-                    <p className="muted">{ed.detail}</p>
-                  </div>
-                </Reveal>
-              ))}
-              <p className="label">Certifications</p>
-              {certifications.map((c) => (
-                <Reveal key={c}>
-                  <div className="job">
-                    <p>
-                      <Icon name="award" size={14} className="accent" /> {c}
-                    </p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+                  <h3>{s.title}</h3>
+                  <p>{s.body}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
-          <Reveal delay={0.15}>
-            <div className="sphere panel">
-              <Suspense fallback={null}>
-                <SkillsSphere skills={tech} />
-              </Suspense>
-              <p className="sphere-hint">Move your mouse to spin</p>
-            </div>
-          </Reveal>
         </section>
 
         {/* TESTIMONIALS (only when real quotes exist) */}
         {testimonials.length > 0 && (
-          <section id="testimonials">
-            <SectionHead label="Kind words" title="What people say." />
-            {testimonials.map((t) => (
-              <Reveal key={t.name}>
-                <figure className="quote panel">
-                  <Icon name="quote" size={28} className="accent" />
-                  <blockquote>{t.quote}</blockquote>
+          <section id="testimonials" className="block glass">
+            <Head label="Testimonials" title="What People Say" />
+            <div className="quotes">
+              {testimonials.map((t) => (
+                <figure key={t.name} className="quote glass">
+                  <blockquote>“{t.quote}”</blockquote>
                   <figcaption>
                     <strong>{t.name}</strong>
-                    <small>{t.title}</small>
+                    <span className="muted">{t.title}</span>
                   </figcaption>
                 </figure>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </section>
         )}
 
         {/* CONTACT */}
-        <section id="contact" className="contact-wrap">
-          <div className="contact panel">
-            <Reveal>
-              <div className="contact-copy">
-                <p className="label">Let's build something</p>
-                <h2 className="display">
-                  <em>Extraordinary.</em>
-                </h2>
-                <p className="body">Have a project in mind or a role to fill? I'd love to hear from you.</p>
-              </div>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <ul className="contact-list">
-                <li>
-                  <Icon name="mail" size={16} />
-                  <a href={`mailto:${profile.links.email}`}>{profile.links.email}</a>
-                </li>
-                <li>
-                  <Icon name="linkedin" size={16} />
-                  <a href={profile.links.linkedin} target="_blank" rel="noreferrer">
-                    LinkedIn profile
-                  </a>
-                </li>
-                <li>
-                  <Icon name="pin" size={16} />
-                  <span>{profile.location}</span>
-                </li>
-              </ul>
-              <a className="btn" href={`mailto:${profile.links.email}`}>
-                Send message <Icon name="arrow" size={16} />
-              </a>
-            </Reveal>
-            <Suspense fallback={<div className="contact-orb" />}>
-              <ContactOrb />
-            </Suspense>
+        <section id="contact" className="contact glass">
+          <div className="contact-copy">
+            <p className="eyebrow">Let's connect</p>
+            <h2>
+              Have a project in mind?
+              <br />
+              Let's build something amazing together.
+            </h2>
+            <ul>
+              <li>
+                <span className="tile small">
+                  <Icon name="mail" size={15} />
+                </span>
+                <a href={`mailto:${profile.links.email}`}>{profile.links.email}</a>
+              </li>
+              <li>
+                <span className="tile small">
+                  <Icon name="linkedin" size={14} />
+                </span>
+                <a href={profile.links.linkedin} target="_blank" rel="noreferrer">
+                  LinkedIn profile
+                </a>
+              </li>
+              <li>
+                <span className="tile small">
+                  <Icon name="pin" size={15} />
+                </span>
+                <span>{profile.location}</span>
+              </li>
+            </ul>
           </div>
+          <ContactForm />
+          <Suspense fallback={null}>
+            <GlassBlob shape="swirl" className="blob blob-contact" />
+          </Suspense>
         </section>
       </main>
 
       <footer className="footer">
-        <div className="footer-brand">
-          <Monogram />
-          <div>
-            <strong>{profile.name}</strong>
-            <small>
-              © {new Date().getFullYear()} {profile.name}. All rights reserved.
-            </small>
-          </div>
-        </div>
-        <div className="footer-col">
-          <p className="label">Navigation</p>
-          {nav.slice(0, 4).map(([id, label]) => (
-            <a key={id} href={`#${id}`}>
-              {label}
-            </a>
-          ))}
-        </div>
-        <div className="footer-col">
-          <p className="label">Follow</p>
+        <span className="logo">{profile.monogram}</span>
+        <span>
+          © {new Date().getFullYear()} {profile.name}
+        </span>
+        <div>
           <a href={profile.links.linkedin} target="_blank" rel="noreferrer">
             LinkedIn
           </a>
@@ -536,7 +439,6 @@ export default function App() {
           </a>
           <a href={`mailto:${profile.links.email}`}>Email</a>
         </div>
-        <Badge text="SOFTWARE • ENGINEER • BUILDER • " />
       </footer>
     </>
   )
